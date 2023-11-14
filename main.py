@@ -26,66 +26,48 @@ def iterate(expressions, currentState, rootState,G, rootFinalState):
     return G, currentState,rootState
 def updateGraph(expression ,G ,rootState , currentState,rootFinalState, isFirstItem = False):
     global non_terminals,non_terminals_list
-    for j,item in enumerate(expression):
-        # A a
-        # item = A
 
+    # get each single character 
+    for j,item in enumerate(expression):
         
         # check if the current item is a non_terminal
         if(item in non_terminals_list):
-            # get the first production
-            print(non_terminals[item])
-            # head, body = non_terminals[item].split(" -> ")
+            # send the matched non_termina as main expression
             expressions = non_terminals[item]
-            print('head,body',expressions)
             
-            # Aux = nx.DiGraph()
-             # define first and final state 
-
+            # add a new node with edge epsilon to join the current node with the end of the new afn from the no_termina
+            # (current node)-ε->(start)-Result AFN->(next node)
             G.add_edge(str(currentState),str(currentState+1),label="ε")
-            currentState+=1
-            
-            # Aux.add_edge(str(currentState), initial=True)
-            # Aux.add_edge(rootFinalState + str(currentState) , final=True)
+            currentState+=1   
             G,currentState,rootAux = iterate(expressions=expressions, currentState=currentState, rootState = currentState,G=G, rootFinalState = rootFinalState)
 
-            print('expression',expression)
-
+            # if this no_terminal have just 1 expression then join the final state with the final node
             if(len(expression) == 1):
-                # G.add_edge(str(currentState+1),rootFinalState + str(rootState) ,label="ε")
                 G.add_edge(rootFinalState + str(rootAux),rootFinalState + str(rootState) ,label="ε")
             else:
                 G.add_edge(rootFinalState + str(rootAux),str(currentState+1) ,label="ε")
-
-            # print(G)
-            # pos = nx.spring_layout(G, seed=10)
-            # labels = {edge: G.edges[edge]["label"] for edge in G.edges}
-            # nx.draw(G, pos, with_labels=True, node_size=500, node_color="lightblue", font_size=10)
-            # nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-            # plt.show()
+            
+            # skip this iteration - we already added nodes from this no_terminal
             continue
 
-        print('item',item, 'j: ',j, 'currentState',currentState)
+        # if this is the first iteration then add epsilon transition to connect the next node
         currentState += 1
         if(j==0 and isFirstItem == True):
-            # (0)-ε->(1)-A->
             G.add_edge(str(rootState),str(currentState),label="ε")
             G.add_edge(str(currentState),str(currentState+1),label=item)
         elif(j < len(expression)-1):
-            # rootState += 1
-            # (0)-ε->(3)-b->(4)
-            # currentState=4
+            # this is not the first or the last char so we just add the item as new edge
+            # (previous node)-item-(current node)
             G.add_edge(str(currentState),str(currentState+1),label=item)
         else:
-            # (0)-ε->(1)-A->(2)
-            # currentState =2
+            # this is the last char so we add the node and join to the end node with epsilon
+            # (previous node)-item-(current node)-ε-(Final node)
             G.add_edge(str(currentState),str(currentState+1),label=item)
             G.add_edge(str(currentState+1),rootFinalState + str(rootState) ,label="ε")
-        # print('nodes',expression)   
+    
 
         # is just one expression 
         if(len(expression) == 1):
-            # G.add_edge(str(currentState),str(currentState+1),label=item)
             G.add_edge(str(currentState+1),rootFinalState + str(rootState) ,label="ε")
     return G,rootState,currentState
 
@@ -95,14 +77,10 @@ def bnf_to_afn(grammar, rootState = 0, currentState = 0):
     # global G, non_terminals,non_terminals_list,rootState,currentState
     G = nx.DiGraph()
 
-    # non_terminals = {}
-    # non_terminals_list = list()
-
     # initial and final state
     rootState = 0
     currentState = 0
     rootFinalState = "F"
-    
     
     # define first and final state 
     G.add_node(str(rootState), initial=True)
@@ -125,23 +103,11 @@ def bnf_to_afn(grammar, rootState = 0, currentState = 0):
 
 # Gramática BNF
 
-# Crear un grafo dirigido para representar el AFN
-# G = nx.DiGraph()
-
-# non_terminals = {}
-# non_terminals_list = list()
-
-# # initial and final state
-# rootState = 0
-# currentState = 0
 BNF = [
     "S -> A a | b A c | d c | b d a",
     "A -> d",
 ]
-# BNF = [
-#     "S -> A a",
-#     "A -> d | f",
-# ]
+
 # get non_terminals
 non_terminals, non_terminals_list = getNonTerminals(BNF)
 # Convertir la gramática en un AFN
